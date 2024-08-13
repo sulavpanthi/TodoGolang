@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -65,7 +66,7 @@ func readTodos(file_path string) ([]Todo, error) {
 }
 
 func writeTodos(todos []Todo, file_path string) {
-	file, err := os.Open(file_path)
+	file, err := os.Create(file_path)
 	if err != nil {
 		fmt.Printf("Cannot open file %v\n", err)
 	}
@@ -95,8 +96,14 @@ func addTodo() {
 		err   error
 	)
 
+	reader := bufio.NewReader(os.Stdin)
+
 	fmt.Print("Enter the title for your next todo: ")
-	fmt.Scan(&title)
+	title, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("cannot read string properly", err)
+	}
+	title = title[:len(title)-1]
 
 	todos, _ = readTodos("todos.csv")
 
