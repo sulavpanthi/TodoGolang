@@ -11,6 +11,7 @@ import (
 
 type DataStructure interface {
 	Add(Todo)
+	GetTodos() interface{}
 }
 
 type SliceDS struct {
@@ -21,12 +22,20 @@ func (slice *SliceDS) Add(todo Todo) {
 	slice.data = append(slice.data, todo)
 }
 
+func (slice *SliceDS) GetTodos() interface{} {
+	return slice.data
+}
+
 type MapDS struct {
 	data map[int]Todo
 }
 
 func (mapDS *MapDS) Add(todo Todo) {
 	mapDS.data[todo.Id] = todo
+}
+
+func (mapDS *MapDS) GetTodos() interface{} {
+	return mapDS.data
 }
 
 func createFileIfNotExists(file_path string) {
@@ -89,7 +98,7 @@ func readTodos(file_path string, dataStructure DataStructure) error {
 	return err
 }
 
-func writeTodos(todos []Todo, file_path string) {
+func writeTodos(todoDataStructure DataStructure, file_path string) {
 	file, err := os.Create(file_path)
 	if err != nil {
 		fmt.Printf("Cannot open file %v\n", err)
@@ -99,13 +108,26 @@ func writeTodos(todos []Todo, file_path string) {
 	defer file.Close()
 	defer writer.Flush()
 
-	for _, record := range todos {
-		idStr := fmt.Sprint(record.Id)
-		isDoneStr := fmt.Sprint(record.IsDone)
-		row := []string{idStr, record.Title, isDoneStr}
-		err := writer.Write(row)
-		if err != nil {
-			fmt.Printf("Cannot write to file %v\n", err)
+	switch todos := todoDataStructure.GetTodos().(type) {
+	case []Todo:
+		for _, record := range todos {
+			idStr := fmt.Sprint(record.Id)
+			isDoneStr := fmt.Sprint(record.IsDone)
+			row := []string{idStr, record.Title, isDoneStr}
+			err := writer.Write(row)
+			if err != nil {
+				fmt.Printf("Cannot write to file %v\n", err)
+			}
+		}
+	case map[int]Todo:
+		for _, record := range todos {
+			idStr := fmt.Sprint(record.Id)
+			isDoneStr := fmt.Sprint(record.IsDone)
+			row := []string{idStr, record.Title, isDoneStr}
+			err := writer.Write(row)
+			if err != nil {
+				fmt.Printf("Cannot write to file %v\n", err)
+			}
 		}
 	}
 
@@ -140,7 +162,7 @@ func addTodo() {
 		IsDone: false,
 	})
 
-	writeTodos(todoDataStructure.data, "todos.csv")
+	writeTodos(&todoDataStructure, "todos.csv")
 	fmt.Println("Todo has been successfully written...")
 }
 
@@ -217,7 +239,7 @@ func updateTodo() {
 		return
 	}
 
-	writeTodos(todoDataStructure.data, "todos.csv")
+	writeTodos(&todoDataStructure, "todos.csv")
 }
 
 func deleteTodo() {
