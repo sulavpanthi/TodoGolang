@@ -128,55 +128,18 @@ func addTodo() {
 func listTodos() {
 	var (
 		todos []Todo
-		file  *os.File
 		err   error
 	)
 
-	// 1. create a new file if file does not exist
 	createFileIfNotExists("todos.csv")
 
-	// 2. Open and defer file close operation
-	file, err = os.Open("todos.csv")
+	todos, err = readTodos("todos.csv")
 	if err != nil {
-		fmt.Printf("Cannot open the file %v\n", err)
-		return
+		fmt.Printf("Error occurred while reading file contents %v", err)
 	}
 
-	defer file.Close()
-
-	// 3. Create a new csv reader and read contents to a data structure
-	reader := csv.NewReader(file)
-
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Printf("Cannot read the file %v\n", err)
-		}
-
-		// convert string to int for id
-		Id, err := strconv.Atoi(record[0])
-		if err != nil {
-			fmt.Printf("Cannot convert string to integer %v\n", err)
-		}
-
-		// convert string to bool for isDone
-		IsDone, err := strconv.ParseBool(record[2])
-		if err != nil {
-			fmt.Printf("Cannot convert string to boolean %v\n", err)
-		}
-
-		todos = append(todos, Todo{
-			Id:     Id,
-			Title:  record[1],
-			IsDone: IsDone,
-		})
-
-	}
 	fmt.Print("\n****All Todos****\n\n")
 	fmt.Print(todos, "\n\n")
-
 }
 
 func updateTodo() {
