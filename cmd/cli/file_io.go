@@ -107,13 +107,6 @@ func addTodo() {
 
 	todos, _ = readTodos("todos.csv")
 
-	file, err := os.Open("todos.csv")
-	if err != nil {
-		fmt.Printf("Cannot open file %v\n", err)
-	}
-
-	defer file.Close()
-
 	todos = append(todos, Todo{
 		Id:     len(todos) + 1,
 		Title:  title,
@@ -122,7 +115,6 @@ func addTodo() {
 
 	writeTodos(todos, "todos.csv")
 	fmt.Println("Todo has been successfully written...")
-
 }
 
 func listTodos() {
