@@ -51,15 +51,16 @@ func createFileIfNotExists(file_path string) {
 	}
 }
 
-func readTodos(file_path string, dataStructure DataStructure) error {
+func readTodos(file_path string, dataStructure DataStructure) (int, error) {
 	var (
-		err error
+		err   error
+		maxId = 0
 	)
 
 	file, err := os.Open(file_path)
 	if err != nil {
 		fmt.Printf("Cannot open file %v\n", err)
-		return err
+		return maxId, err
 	}
 
 	defer file.Close()
@@ -84,18 +85,16 @@ func readTodos(file_path string, dataStructure DataStructure) error {
 			fmt.Printf("Cannot convert string to boolean %v\n", err)
 		}
 
-		// todos = append(todos, Todo{
-		// 	Id:     id,
-		// 	Title:  record[1],
-		// 	IsDone: isDone,
-		// })
 		dataStructure.Add(Todo{
 			Id:     id,
 			Title:  record[1],
 			IsDone: isDone,
 		})
+
+		// track max id
+		maxId = max(maxId, id)
 	}
-	return err
+	return maxId, err
 }
 
 func writeTodos(todoDataStructure DataStructure, file_path string) {
@@ -151,13 +150,13 @@ func addTodo() {
 	title = title[:len(title)-1]
 
 	todoDataStructure := SliceDS{}
-	err = readTodos("todos.csv", &todoDataStructure)
+	maxId, err := readTodos("todos.csv", &todoDataStructure)
 	if err != nil {
 		fmt.Printf("Cannot read todos %v", err)
 	}
 
 	todoDataStructure.Add(Todo{
-		Id:     len(todoDataStructure.data) + 1,
+		Id:     maxId + 1,
 		Title:  title,
 		IsDone: false,
 	})
@@ -174,7 +173,7 @@ func listTodos() {
 	createFileIfNotExists("todos.csv")
 
 	todoDataStructure := SliceDS{}
-	err = readTodos("todos.csv", &todoDataStructure)
+	_, err = readTodos("todos.csv", &todoDataStructure)
 	if err != nil {
 		fmt.Printf("Error occurred while reading file contents %v", err)
 	}
@@ -191,7 +190,7 @@ func updateTodo() {
 	fmt.Scanln(&todoId)
 
 	todoDataStructure := MapDS{data: make(map[int]Todo)}
-	err := readTodos("todos.csv", &todoDataStructure) // Todo: Make readTodos dynamic to get todos in desired data structure type (e.g. slices, maps)
+	_, err := readTodos("todos.csv", &todoDataStructure)
 	if err != nil {
 		fmt.Printf("Error while reading todos from csv file %v\n", err)
 	}
