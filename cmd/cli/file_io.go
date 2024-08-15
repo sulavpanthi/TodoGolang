@@ -245,5 +245,26 @@ func updateTodo() {
 }
 
 func deleteTodo() {
+	createFileIfNotExists("todos.csv")
 
+	var todoId int
+	fmt.Print("Enter the todo id that you want to delete: ")
+	fmt.Scanln(&todoId)
+
+	todoDataStructure := MapDS{data: make(map[int]Todo)}
+
+	_, err := readTodos("todos.csv", &todoDataStructure)
+	if err != nil {
+		fmt.Printf("Error occurred while reading file contents %v", err)
+	}
+
+	_, exists := todoDataStructure.data[todoId]
+	if !exists {
+		fmt.Println("Todo with this id does not exist yet!")
+		return
+	}
+
+	delete(todoDataStructure.data, todoId)
+	writeTodos(&todoDataStructure, "todos.csv")
+	fmt.Print("Todo has been successfully deleted !!!\n\n")
 }
