@@ -190,13 +190,17 @@ func updateTodo() {
 	fmt.Print("Enter todo Id that you want to update: ")
 	fmt.Scanln(&todoId)
 
-	todoDataStructure := SliceDS{}
+	todoDataStructure := MapDS{data: make(map[int]Todo)}
 	err := readTodos("todos.csv", &todoDataStructure) // Todo: Make readTodos dynamic to get todos in desired data structure type (e.g. slices, maps)
 	if err != nil {
 		fmt.Printf("Error while reading todos from csv file %v\n", err)
 	}
 
-	todo := todoDataStructure.data[0]
+	todo, exists := todoDataStructure.data[todoId]
+	if !exists {
+		fmt.Println("Todo with this id does not exist yet!")
+		return
+	}
 
 	fmt.Println("Enter one of the choices below")
 	fmt.Println("1. Update title")
@@ -207,7 +211,6 @@ func updateTodo() {
 
 	switch updateChoice {
 	case 1:
-		var newTitle string
 		reader := bufio.NewReader(os.Stdin)
 
 		fmt.Print("Enter new title: ")
@@ -238,7 +241,7 @@ func updateTodo() {
 		fmt.Println("Invalid option, try again later.")
 		return
 	}
-
+	todoDataStructure.data[todoId] = todo
 	writeTodos(&todoDataStructure, "todos.csv")
 }
 
