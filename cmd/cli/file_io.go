@@ -135,7 +135,61 @@ func listTodos() {
 }
 
 func updateTodo() {
+	var (
+		todoId, updateChoice int
+	)
+	fmt.Print("Enter todo Id that you want to update: ")
+	fmt.Scanln(&todoId)
 
+	todos, err := readTodos("todos.csv") // Todo: Make readTodos dynamic to get todos in desired data structure type (e.g. slices, maps)
+	if err != nil {
+		fmt.Printf("Error while reading todos from csv file %v\n", err)
+	}
+
+	todo := todos[0]
+
+	fmt.Println("Enter one of the choices below")
+	fmt.Println("1. Update title")
+	fmt.Println("2. Update completion status of todo")
+	fmt.Println("3. Go back")
+
+	fmt.Scanln(&updateChoice)
+
+	switch updateChoice {
+	case 1:
+		var newTitle string
+		reader := bufio.NewReader(os.Stdin)
+
+		fmt.Print("Enter new title: ")
+		newTitle, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Cannot read this input: ", err)
+		}
+		todo.Title = newTitle
+	case 2:
+		var (
+			todoCompletionState string
+		)
+		fmt.Println("Is this todo completed? [Y/n]")
+		fmt.Scanln(&todoCompletionState)
+
+		switch todoCompletionState {
+		case "Yes", "Y", "y", "yes":
+			todo.IsDone = true
+		case "No", "no", "N", "n":
+			todo.IsDone = false
+		default:
+			fmt.Println("Todo has been marked complete. Please update again if this is not what you wanted.")
+			todo.IsDone = true
+		}
+	case 3:
+		return
+	default:
+		fmt.Println("Invalid option, try again later.")
+		return
+	}
+
+	writeTodos(todos, "todos.csv")
 }
 
 func deleteTodo() {
