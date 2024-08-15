@@ -9,6 +9,26 @@ import (
 	"strconv"
 )
 
+type DataStructure interface {
+	Add(Todo)
+}
+
+type SliceDS struct {
+	data []Todo
+}
+
+func (slice *SliceDS) Add(todo Todo) {
+	slice.data = append(slice.data, todo)
+}
+
+type MapDS struct {
+	data map[int]Todo
+}
+
+func (mapDS *MapDS) Add(todo Todo) {
+	mapDS.data[todo.Id] = todo
+}
+
 func createFileIfNotExists(file_path string) {
 	var file *os.File
 
@@ -22,16 +42,15 @@ func createFileIfNotExists(file_path string) {
 	}
 }
 
-func readTodos(file_path string) ([]Todo, error) {
+func readTodos(file_path string, dataStructure DataStructure) error {
 	var (
-		todos []Todo
-		err   error
+		err error
 	)
 
 	file, err := os.Open(file_path)
 	if err != nil {
 		fmt.Printf("Cannot open file %v\n", err)
-		return nil, err
+		return err
 	}
 
 	defer file.Close()
@@ -56,13 +75,18 @@ func readTodos(file_path string) ([]Todo, error) {
 			fmt.Printf("Cannot convert string to boolean %v\n", err)
 		}
 
-		todos = append(todos, Todo{
+		// todos = append(todos, Todo{
+		// 	Id:     id,
+		// 	Title:  record[1],
+		// 	IsDone: isDone,
+		// })
+		dataStructure.Add(Todo{
 			Id:     id,
 			Title:  record[1],
 			IsDone: isDone,
 		})
 	}
-	return todos, err
+	return err
 }
 
 func writeTodos(todos []Todo, file_path string) {
@@ -92,7 +116,6 @@ func addTodo() {
 
 	var (
 		title string
-		todos []Todo
 		err   error
 	)
 
@@ -105,33 +128,37 @@ func addTodo() {
 	}
 	title = title[:len(title)-1]
 
-	todos, _ = readTodos("todos.csv")
+	todoDataStructure := SliceDS{}
+	err = readTodos("todos.csv", &todoDataStructure)
+	if err != nil {
+		fmt.Printf("Cannot read todos %v", err)
+	}
 
-	todos = append(todos, Todo{
-		Id:     len(todos) + 1,
+	todoDataStructure.Add(Todo{
+		Id:     len(todoDataStructure.data) + 1,
 		Title:  title,
 		IsDone: false,
 	})
 
-	writeTodos(todos, "todos.csv")
+	writeTodos(todoDataStructure.data, "todos.csv")
 	fmt.Println("Todo has been successfully written...")
 }
 
 func listTodos() {
 	var (
-		todos []Todo
-		err   error
+		err error
 	)
 
 	createFileIfNotExists("todos.csv")
 
-	todos, err = readTodos("todos.csv")
+	todoDataStructure := SliceDS{}
+	err = readTodos("todos.csv", &todoDataStructure)
 	if err != nil {
 		fmt.Printf("Error occurred while reading file contents %v", err)
 	}
 
 	fmt.Print("\n****All Todos****\n\n")
-	fmt.Print(todos, "\n\n")
+	fmt.Print(todoDataStructure.data, "\n\n")
 }
 
 func updateTodo() {
@@ -141,12 +168,13 @@ func updateTodo() {
 	fmt.Print("Enter todo Id that you want to update: ")
 	fmt.Scanln(&todoId)
 
-	todos, err := readTodos("todos.csv") // Todo: Make readTodos dynamic to get todos in desired data structure type (e.g. slices, maps)
+	todoDataStructure := SliceDS{}
+	err := readTodos("todos.csv", &todoDataStructure) // Todo: Make readTodos dynamic to get todos in desired data structure type (e.g. slices, maps)
 	if err != nil {
 		fmt.Printf("Error while reading todos from csv file %v\n", err)
 	}
 
-	todo := todos[0]
+	todo := todoDataStructure.data[0]
 
 	fmt.Println("Enter one of the choices below")
 	fmt.Println("1. Update title")
@@ -189,7 +217,7 @@ func updateTodo() {
 		return
 	}
 
-	writeTodos(todos, "todos.csv")
+	writeTodos(todoDataStructure.data, "todos.csv")
 }
 
 func deleteTodo() {
